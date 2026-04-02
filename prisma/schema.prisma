@@ -35,6 +35,7 @@ model User {
   email String @unique
   password String 
   role Role @default(VIEWER)
+  tokenVersion Int @default(0)
   active Boolean @default(true)
 
   transactions Transaction[]
@@ -69,7 +70,7 @@ model AuditLog {
   id Int @id @default(autoincrement())
 
   action AuditAction
-  
+
   entity String      // "User", "Transaction"
   entityId Int
 
