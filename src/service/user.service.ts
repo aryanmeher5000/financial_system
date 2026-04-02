@@ -3,12 +3,12 @@ import { prisma } from "../lib/prisma";
 import { createUserSchema, updateUserActiveSchema, updateUserRoleSchema } from "../schemas/user.schema";
 import { AppError } from "../utils/appError";
 import { hashPassword } from "../utils/password";
+
 /** criterions
  * 1. query: search by name or emailid
  * 2. page: page number
  * 3. sort: for deciding ascending or descending
  */
-
 export async function getUsersByCriteria(
   query: string | undefined = undefined,
   sort: "asc" | "desc" = "asc",
@@ -16,11 +16,14 @@ export async function getUsersByCriteria(
 ) {
   const PAGE_SIZE = 10;
   const users = await prisma.user.findMany({
-    where: query
-      ? {
-          OR: [{ name: { contains: query, mode: "insensitive" } }, { email: { contains: query, mode: "insensitive" } }],
-        }
-      : undefined,
+    where: {
+      ...(query
+        ? {
+            OR: [{ name: { contains: query, mode: "insensitive" } }, { email: { contains: query, mode: "insensitive" } }],
+          }
+        : undefined),
+      deletedAt: null,
+    },
     orderBy: { name: sort },
     select: {
       id: true,
@@ -38,7 +41,7 @@ export async function getUsersByCriteria(
 
 export async function getUserById(userId: number) {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: userId, deletedAt: null },
     select: {
       id: true,
       name: true,
@@ -58,7 +61,7 @@ export async function createUser(name: string, email: string, password: string, 
   const { success, error } = createUserSchema.safeParse({ name, email, password, role });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
-  const userExists = await prisma.user.findUnique({ where: { email } });
+  const userExists = await prisma.user.findUnique({ where: { email, deletedAt: null } });
   if (userExists) throw new AppError("User with this email already exists", 400);
 
   const hashedPassword = await hashPassword(password);
@@ -91,7 +94,7 @@ export async function createUser(name: string, email: string, password: string, 
 }
 
 export async function deleteUser(userId: number, adminId: number) {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
   if (!user.active) throw new AppError("User is already deactivated", 400);
 
@@ -129,7 +132,7 @@ export async function updateUserRole(userId: number, role: Role, adminId: number
   const { success, error } = updateUserRoleSchema.safeParse({ role });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
   if (user.role === role) throw new AppError("User already has this role", 400);
 
@@ -167,7 +170,7 @@ export async function updateUserAccountActivation(userId: number, active: boolea
   const { success, error } = updateUserActiveSchema.safeParse({ active });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
   if (user.active === active) throw new AppError(`User is already ${active ? "activated" : "deactivated"}`, 400);
 
