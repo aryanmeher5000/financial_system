@@ -104,6 +104,7 @@ export async function deleteUser(userId: number, adminId: number) {
         name: true,
         email: true,
         role: true,
+        deletedAt: true,
       },
     });
 
@@ -114,7 +115,7 @@ export async function deleteUser(userId: number, adminId: number) {
         entityId: userId,
         userId: adminId,
         oldData: { active: true, deletedAt: null },
-        newData: { active: false, deletedAt: new Date() },
+        newData: { active: false, deletedAt: updated.deletedAt },
       },
     });
 
