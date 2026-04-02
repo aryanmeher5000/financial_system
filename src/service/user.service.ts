@@ -113,8 +113,8 @@ export async function deleteUser(userId: number, adminId: number) {
         entity: "User",
         entityId: userId,
         userId: adminId,
-        oldData: { active: true },
-        newData: { active: false },
+        oldData: { active: true, deletedAt: null },
+        newData: { active: false, deletedAt: new Date() },
       },
     });
 
