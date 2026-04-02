@@ -10,13 +10,6 @@ export const createUserSchema = z.object({
 export type CreateUserSchema = z.infer<typeof createUserSchema>;
 
 
-export const updateUserPasswordSchema = z.object({
-    password: z.string().min(8),
-}).strict();
-
-export type UpdateUserPasswordSchema = z.infer<typeof updateUserPasswordSchema>;
-
-
 export const updateUserRoleSchema = z.object({
     role: z.enum(["ADMIN", "ANALYST", "VIEWER"]),
 }).strict();
