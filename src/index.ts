@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express, { type NextFunction, type Request, type Response } from "express";
+import { ZodError } from "zod";
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -11,13 +12,15 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
+  if (err instanceof ZodError) return res.status(400).json({ error: err.issues[0].message });
+  if (err instanceof Error) return res.status(400).json({ error: err.message });
+
   res.status(500).json({ error: "Internal server error" });
 });
 
