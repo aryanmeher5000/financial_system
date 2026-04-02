@@ -61,7 +61,7 @@ export async function createUser(name: string, email: string, password: string, 
   const { success, error } = createUserSchema.safeParse({ name, email, password, role });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
-  const userExists = await prisma.user.findUnique({ where: { email, deletedAt: null } });
+  const userExists = await prisma.user.findUnique({ where: { email } });
   if (userExists) throw new AppError("User with this email already exists", 400);
 
   const hashedPassword = await hashPassword(password);
