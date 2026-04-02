@@ -12,3 +12,5 @@ router.patch("/updatePassword", authenticate(), updatePasswordController);
 router.post("/refresh", authenticate(), refreshAccessToken);
 
 router.post("/logout", authenticate(), logoutController);
+
+export default router;
