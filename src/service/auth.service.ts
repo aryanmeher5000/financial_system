@@ -9,7 +9,7 @@ export async function validateUserSignin(email: string, password: string) {
   if (!success) throw new AppError(error.issues[0].message, 400);
 
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email, isDeleted: false },
     select: {
       id: true,
       password: true,
@@ -41,7 +41,7 @@ export async function refreshAccessToken(refreshToken: string) {
 
   const payload = await verifyRefreshToken(refreshToken);
   const user = await prisma.user.findUnique({
-    where: { id: payload.sub },
+    where: { id: payload.sub, isDeleted: false },
     select: {
       id: true,
       role: true,
@@ -70,7 +70,7 @@ export async function updatePassword(userId: number, oldPassword: string, newPas
   if (!success) throw new AppError(error.issues[0].message, 400);
 
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: userId, isDeleted: false },
     select: {
       id: true,
       password: true,
@@ -82,7 +82,6 @@ export async function updatePassword(userId: number, oldPassword: string, newPas
   if (!isPasswordValid) throw new AppError("Invalid credentials", 401);
 
   const hashed = await hashPassword(newPassword);
-
   await prisma.user.update({
     where: { id: userId },
     data: {
@@ -94,7 +93,7 @@ export async function updatePassword(userId: number, oldPassword: string, newPas
 
 export async function logoutUser(userId: number) {
   await prisma.user.update({
-    where: { id: userId },
+    where: { id: userId, isDeleted: false },
     data: { tokenVersion: { increment: 1 } },
   });
 }
