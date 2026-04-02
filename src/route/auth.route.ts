@@ -7,8 +7,8 @@ const router = Router();
 
 router.post("/signin", signinController);
 
-router.patch("/updatePassword", authenticate, updatePasswordController);
+router.patch("/updatePassword", authenticate(), updatePasswordController);
 
-router.post("/refresh", authenticate, refreshAccessToken);
+router.post("/refresh", authenticate(), refreshAccessToken);
 
-router.post("/logout", authenticate, logoutController);
+router.post("/logout", authenticate(), logoutController);
