@@ -22,7 +22,7 @@ export async function getUsersByCriteria(
             OR: [{ name: { contains: query, mode: "insensitive" } }, { email: { contains: query, mode: "insensitive" } }],
           }
         : undefined),
-      deletedAt: null,
+      isDeleted: false,
     },
     orderBy: { name: sort },
     select: {
@@ -41,7 +41,7 @@ export async function getUsersByCriteria(
 
 export async function getUserById(userId: number) {
   const user = await prisma.user.findUnique({
-    where: { id: userId, deletedAt: null },
+    where: { id: userId, isDeleted: false },
     select: {
       id: true,
       name: true,
@@ -49,7 +49,7 @@ export async function getUserById(userId: number) {
       role: true,
       active: true,
       createdAt: true,
-      deletedAt: true,
+      isDeleted: true,
     },
   });
   if (!user) throw new AppError("User with this ID does not exist", 404);
@@ -65,7 +65,6 @@ export async function createUser(name: string, email: string, password: string, 
   if (userExists) throw new AppError("User with this email already exists", 400);
 
   const hashedPassword = await hashPassword(password);
-
   const user = await prisma.$transaction(async (tx) => {
     const newUser = await tx.user.create({
       data: { name, email, password: hashedPassword, role },
@@ -84,6 +83,8 @@ export async function createUser(name: string, email: string, password: string, 
         entity: "User",
         entityId: newUser.id,
         userId: adminId,
+        oldData: {},
+        newData: { name, email, role, createdAt: newUser.createdAt },
       },
     });
 
@@ -94,20 +95,18 @@ export async function createUser(name: string, email: string, password: string, 
 }
 
 export async function deleteUser(userId: number, adminId: number) {
-  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
+  const user = await prisma.user.findUnique({ where: { id: userId, isDeleted: false } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
-  if (!user.active) throw new AppError("User is already deactivated", 400);
 
   const deletedUser = await prisma.$transaction(async (tx) => {
     const updated = await tx.user.update({
-      where: { id: userId },
-      data: { active: false, deletedAt: new Date() },
+      where: { id: userId, isDeleted: false },
+      data: { isDeleted: true },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
-        deletedAt: true,
       },
     });
 
@@ -117,8 +116,8 @@ export async function deleteUser(userId: number, adminId: number) {
         entity: "User",
         entityId: userId,
         userId: adminId,
-        oldData: { active: true, deletedAt: null },
-        newData: { active: false, deletedAt: updated.deletedAt },
+        oldData: { isDeleted: false },
+        newData: { isDeleted: true },
       },
     });
 
@@ -132,13 +131,13 @@ export async function updateUserRole(userId: number, role: Role, adminId: number
   const { success, error } = updateUserRoleSchema.safeParse({ role });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
-  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
+  const user = await prisma.user.findUnique({ where: { id: userId, isDeleted: false } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
   if (user.role === role) throw new AppError("User already has this role", 400);
 
   const updatedUser = await prisma.$transaction(async (tx) => {
     const updated = await tx.user.update({
-      where: { id: userId },
+      where: { id: userId, isDeleted: false },
       data: { role },
       select: {
         id: true,
@@ -170,7 +169,7 @@ export async function updateUserAccountActivation(userId: number, active: boolea
   const { success, error } = updateUserActiveSchema.safeParse({ active });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
-  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
+  const user = await prisma.user.findUnique({ where: { id: userId, isDeleted: false } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
   if (user.active === active) throw new AppError(`User is already ${active ? "activated" : "deactivated"}`, 400);
 
