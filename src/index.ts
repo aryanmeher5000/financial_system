@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { ZodError } from "zod";
+import { AppError } from "./utils/appError";
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -18,8 +19,18 @@ app.use((req, res) => {
 
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
-  if (err instanceof ZodError) return res.status(400).json({ error: err.issues[0].message });
-  if (err instanceof Error) return res.status(400).json({ error: err.message });
+
+  if (err instanceof ZodError) {
+    return res.status(400).json({ error: err.issues[0].message });
+  }
+
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({ error: err.message });
+  }
+
+  if (err instanceof Error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
 
   res.status(500).json({ error: "Internal server error" });
 });
