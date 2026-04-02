@@ -23,6 +23,12 @@ enum TransactionType {
   EXPENSE
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
 model User {
   id Int @id @default(autoincrement())
   name String
@@ -32,11 +38,11 @@ model User {
   active Boolean @default(true)
 
   transactions Transaction[]
+  auditLogs AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
-
 }
 
 model Transaction {
@@ -57,4 +63,21 @@ model Transaction {
   @@index([userId])
   @@index([category])
   @@index([date])
+}
+
+model AuditLog {
+  id Int @id @default(autoincrement())
+
+  action AuditAction
+  
+  entity String      // "User", "Transaction"
+  entityId Int
+
+  userId Int         // who did it
+  user User @relation(fields: [userId], references: [id])
+
+  oldData Json?
+  newData Json?
+
+  createdAt DateTime @default(now())
 }
