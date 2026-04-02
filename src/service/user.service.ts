@@ -1,3 +1,4 @@
+import { AuditAction, Role } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 import { createUserSchema, updateUserActiveSchema, updateUserRoleSchema } from "../schemas/user.schema";
 import { AppError } from "../utils/appError";
@@ -53,7 +54,7 @@ export async function getUserById(userId: number) {
   return user;
 }
 
-export async function createUser(name: string, email: string, password: string, role: "VIEWER" | "ANALYST" | "ADMIN") {
+export async function createUser(name: string, email: string, password: string, role: Role, adminId: number) {
   const { success, error } = createUserSchema.safeParse({ name, email, password, role });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
@@ -62,83 +63,138 @@ export async function createUser(name: string, email: string, password: string, 
 
   const hashedPassword = await hashPassword(password);
 
-  const user = await prisma.user.create({
-    data: { name, email, password: hashedPassword, role },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-    },
+  const user = await prisma.$transaction(async (tx) => {
+    const newUser = await tx.user.create({
+      data: { name, email, password: hashedPassword, role },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        action: AuditAction.CREATE,
+        entity: "User",
+        entityId: newUser.id,
+        userId: adminId,
+      },
+    });
+
+    return newUser;
   });
 
   return user;
 }
 
-export async function deleteUser(userId: number) {
+export async function deleteUser(userId: number, adminId: number) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
-
   if (!user.active) throw new AppError("User is already deactivated", 400);
 
-  const deletedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { active: false, deletedAt: new Date() },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-    },
+  const deletedUser = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({
+      where: { id: userId },
+      data: { active: false, deletedAt: new Date() },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        action: AuditAction.DELETE,
+        entity: "User",
+        entityId: userId,
+        userId: adminId,
+        oldData: { active: true },
+        newData: { active: false },
+      },
+    });
+
+    return updated;
   });
 
   return deletedUser;
 }
 
-export async function updateUserRole(userId: number, role: "VIEWER" | "ANALYST" | "ADMIN") {
+export async function updateUserRole(userId: number, role: Role, adminId: number) {
   const { success, error } = updateUserRoleSchema.safeParse({ role });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
-
   if (user.role === role) throw new AppError("User already has this role", 400);
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { role },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      active: true,
-    },
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({
+      where: { id: userId },
+      data: { role },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        active: true,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        action: AuditAction.UPDATE,
+        entity: "User",
+        entityId: userId,
+        userId: adminId,
+        oldData: { role: user.role },
+        newData: { role },
+      },
+    });
+
+    return updated;
   });
 
   return updatedUser;
 }
 
-export async function updateUserAccountActivation(userId: number, active: boolean) {
+export async function updateUserAccountActivation(userId: number, active: boolean, adminId: number) {
   const { success, error } = updateUserActiveSchema.safeParse({ active });
   if (!success) throw new AppError(error.issues[0].message, 400);
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError("User with this ID does not exist", 404);
-
   if (user.active === active) throw new AppError(`User is already ${active ? "activated" : "deactivated"}`, 400);
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { active },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      active: true,
-    },
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({
+      where: { id: userId },
+      data: { active },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        active: true,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        action: AuditAction.UPDATE,
+        entity: "User",
+        entityId: userId,
+        userId: adminId,
+        oldData: { active: user.active },
+        newData: { active },
+      },
+    });
+
+    return updated;
   });
 
   return updatedUser;
