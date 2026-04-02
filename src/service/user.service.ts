@@ -1,3 +1,4 @@
+import { Prisma } from "../generated/prisma/client";
 import { AuditAction, Role } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 import { createUserSchema, updateUserActiveSchema, updateUserRoleSchema } from "../schemas/user.schema";
@@ -9,34 +10,39 @@ import { hashPassword } from "../utils/password";
  * 2. page: page number
  * 3. sort: for deciding ascending or descending
  */
+const PAGE_SIZE = 10;
+
 export async function getUsersByCriteria(
   query: string | undefined = undefined,
   sort: "asc" | "desc" = "asc",
   page: number = 1,
 ) {
-  const PAGE_SIZE = 10;
-  const users = await prisma.user.findMany({
-    where: {
-      ...(query
-        ? {
-            OR: [{ name: { contains: query, mode: "insensitive" } }, { email: { contains: query, mode: "insensitive" } }],
-          }
-        : undefined),
-      isDeleted: false,
-    },
-    orderBy: { name: sort },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      active: true,
-    },
-    skip: (page - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
-  });
+  const where: Prisma.UserWhereInput = {
+    // ✅ correct type
+    isDeleted: false,
+    ...(query && {
+      OR: [{ name: { contains: query, mode: "insensitive" } }, { email: { contains: query, mode: "insensitive" } }],
+    }),
+  };
 
-  return users;
+  const [users, total] = await prisma.$transaction([
+    prisma.user.findMany({
+      where,
+      orderBy: { name: sort },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        active: true,
+      },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return { page, totalPages: Math.ceil(total / PAGE_SIZE), users };
 }
 
 export async function getUserById(userId: number) {
