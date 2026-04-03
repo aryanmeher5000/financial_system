@@ -3,6 +3,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import { ZodError } from "zod";
 import { AppError } from "./utils/appError";
 import authRouter from "./route/auth.route";
@@ -18,6 +19,7 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
