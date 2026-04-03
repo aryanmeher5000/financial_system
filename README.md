@@ -737,7 +737,7 @@ Generate a financial summary report for a given date range.
     "topSpendingCategory": {
       "category": "string",
       "amount": "number"
-    } | null,
+    }
     "categoryTotals": {
       "<category>": "number"
     },
