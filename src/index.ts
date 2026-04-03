@@ -10,9 +10,15 @@ import authRouter from "./route/auth.route";
 import userRouter from "./route/user.route";
 import transactionRouter from "./route/transaction.route";
 import summaryRouter from "./route/summary.route";
+import rateLimit from "express-rate-limit";
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 mins
+  limit: 100,
+  message: { error: "Too many requests, please try again later" },
+});
 
 app.use(helmet());
 app.use(cors());
@@ -21,6 +27,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(limiter);
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
 app.use("/transaction", transactionRouter);
