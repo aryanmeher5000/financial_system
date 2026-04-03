@@ -5,3 +5,5 @@ import { generateSummaryController } from "../controller/summary.controller";
 const router = Router();
 
 router.get("/", authenticate("ANALYST"), generateSummaryController);
+
+export default router;
