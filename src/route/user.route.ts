@@ -15,7 +15,7 @@ router.get("/", authenticate("ADMIN"), getUsersByCriteriaController);
 
 router.get("/:id", authenticate("ADMIN"), getUserByIdController);
 
-router.post("/create", authenticate("ADMIN"), createUserController);
+router.post("/", authenticate("ADMIN"), createUserController);
 
 router.delete("/:id", authenticate("ADMIN"), deleteUserController);
 
