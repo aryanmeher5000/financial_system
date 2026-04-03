@@ -2,6 +2,7 @@ import "dotenv/config";
 import express, { type NextFunction, type Request, type Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
+import morgan from "morgan";
 import { ZodError } from "zod";
 import { AppError } from "./utils/appError";
 import authRouter from "./route/auth.route";
@@ -14,6 +15,7 @@ const port = Number(process.env.PORT) || 3000;
 
 app.use(helmet());
 app.use(cors());
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
