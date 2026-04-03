@@ -22,3 +22,5 @@ router.delete("/:id", authenticate("ADMIN"), deleteUserController);
 router.patch("/:id/role", authenticate("ADMIN"), updateUserRoleController);
 
 router.patch("/:id/status", authenticate("ADMIN"), updateUserAccountActivationController);
+
+export default router;
