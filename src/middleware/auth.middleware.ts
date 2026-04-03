@@ -22,7 +22,7 @@ export function authenticate(minimumRole: keyof typeof ROLE_HIERARCHY = "VIEWER"
       const payload = await verifyAccessToken(token);
 
       if (ROLE_HIERARCHY[payload.role] < ROLE_HIERARCHY[minimumRole]) {
-        throw new AppError("Unauthorized request", 403);
+        throw new AppError("Forbidden: Admin access required", 403);
       }
 
       req.user = payload;
