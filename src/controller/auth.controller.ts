@@ -12,13 +12,13 @@ export async function signinController(req: Request, res: Response) {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
-  res.status(200).json({ accessToken });
+  res.status(200).json({ data: { accessToken } });
 }
 
 export async function refreshAccessTokenController(req: Request, res: Response) {
   const { refreshToken } = req.cookies;
   const { accessToken } = await refreshAccessToken(refreshToken);
-  res.status(200).json({ accessToken });
+  res.status(200).json({ data: { accessToken } });
 }
 
 export async function updatePasswordController(req: Request, res: Response) {
