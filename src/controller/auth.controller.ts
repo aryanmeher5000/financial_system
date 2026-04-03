@@ -16,7 +16,7 @@ export async function signinController(req: Request, res: Response) {
 }
 
 export async function refreshAccessTokenController(req: Request, res: Response) {
-  const refreshToken = req.cookies.refreshToken;
+  const { refreshToken } = req.cookies;
   const { accessToken } = await refreshAccessToken(refreshToken);
   res.status(200).json({ accessToken });
 }

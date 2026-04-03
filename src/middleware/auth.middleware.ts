@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../utils/jwt";
 import { AppError } from "../utils/appError";
+import extractId from "../utils/extractId";
 
 const ROLE_HIERARCHY = {
   VIEWER: 0,
@@ -25,6 +26,7 @@ export function authenticate(minimumRole: keyof typeof ROLE_HIERARCHY = "VIEWER"
       }
 
       req.user = payload;
+      req.user.sub = extractId("user", req.user.sub); // id is in string format converting to int
       next();
     } catch (err) {
       if (err instanceof AppError) throw err;

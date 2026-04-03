@@ -3,6 +3,7 @@ import { TokenPayload, createAccessToken, createRefreshToken, verifyRefreshToken
 import { prisma } from "../lib/prisma";
 import { updateUserPasswordSchema, userSigninSchema } from "../schemas/auth.schema";
 import { AppError } from "../utils/appError";
+import extractId from "../utils/extractId";
 
 export async function validateUserSignin(email: string, password: string) {
   const { success, error } = userSigninSchema.safeParse({ email, password });
@@ -40,8 +41,9 @@ export async function refreshAccessToken(refreshToken: string) {
   if (!refreshToken) throw new AppError("Refresh token not found", 401);
 
   const payload = await verifyRefreshToken(refreshToken);
+  const id = extractId("user", payload.sub);
   const user = await prisma.user.findUnique({
-    where: { id: payload.sub, isDeleted: false },
+    where: { id, isDeleted: false },
     select: {
       id: true,
       role: true,
