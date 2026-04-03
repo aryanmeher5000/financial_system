@@ -495,12 +495,12 @@ Activate or deactivate a user account.
 
 ### ❌ User Management — Common Errors
 
-| Status | Message                   |
-| ------ | ------------------------- |
-| `401`  | `"Unauthorized"`          |
-| `403`  | `"Unauthorized request"`  |
-| `404`  | `"User not found"`        |
-| `500`  | `"Internal server error"` |
+| Status | Message                              |
+| ------ | ------------------------------------ |
+| `401`  | `"Unauthorized"`                     |
+| `403`  | `"Forbidden: Admin access required"` |
+| `404`  | `"User not found"`                   |
+| `500`  | `"Internal server error"`            |
 
 ### 📌 User Management — Notes
 
