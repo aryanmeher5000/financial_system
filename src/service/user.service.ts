@@ -14,11 +14,10 @@ const PAGE_SIZE = 10;
 
 export async function getUsersByCriteria(
   query: string | undefined = undefined,
-  sort: "asc" | "desc" = "asc",
+  sortOrder: "asc" | "desc" = "asc",
   page: number = 1,
 ) {
   const where: Prisma.UserWhereInput = {
-    // ✅ correct type
     isDeleted: false,
     ...(query && {
       OR: [{ name: { contains: query, mode: "insensitive" } }, { email: { contains: query, mode: "insensitive" } }],
@@ -28,7 +27,7 @@ export async function getUsersByCriteria(
   const [users, total] = await prisma.$transaction([
     prisma.user.findMany({
       where,
-      orderBy: { name: sort },
+      orderBy: { name: sortOrder },
       select: {
         id: true,
         name: true,
