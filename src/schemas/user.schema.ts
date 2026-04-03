@@ -32,11 +32,16 @@ export const updateUserActiveSchema = z
 export type UpdateUserActiveSchema = z.infer<typeof updateUserActiveSchema>;
 
 export const getUsersByCriteriaSchema = z.object({
-  query: z.string().min(1),
-  sortOrder: z.enum(["asc", "desc"], { message: "sortOrder must be either asc or desc" }).default("desc"),
-  page: z.coerce
-    .number({ message: "Page must be a number" })
-    .int({ message: "Page must be an integer" })
-    .positive({ message: "Page must be a positive number" })
+  query: z.string().min(1).optional(),
+  sortOrder: z
+    .string()
+    .transform((val) => (val === "desc" ? "desc" : "asc"))
+    .default("asc"),
+  page: z
+    .any()
+    .transform((val) => {
+      const num = Number(val);
+      return Number.isInteger(num) && num > 0 ? num : 1;
+    })
     .default(1),
 });

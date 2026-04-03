@@ -16,7 +16,7 @@ export async function getUsersByCriteriaController(req: Request, res: Response) 
   if (!success) throw new AppError(error.issues[0].message, 400);
 
   const users = await getUsersByCriteria(data.query, data.sortOrder, data.page);
-  res.status(200).json({ users });
+  res.status(200).json({ ...users });
 }
 
 export async function getUserByIdController(req: Request, res: Response) {

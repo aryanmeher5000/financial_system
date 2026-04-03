@@ -41,7 +41,7 @@ export async function getUsersByCriteria(
     prisma.user.count({ where }),
   ]);
 
-  return { page, totalPages: Math.ceil(total / PAGE_SIZE), users };
+  return { users, page, totalPages: Math.ceil(total / PAGE_SIZE) };
 }
 
 export async function getUserById(userId: number) {
