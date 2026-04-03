@@ -1,19 +1,29 @@
 import "dotenv/config";
+import "express-async-errors";
 import express, { type NextFunction, type Request, type Response } from "express";
+import helmet from "helmet";
+import cors from "cors";
 import { ZodError } from "zod";
 import { AppError } from "./utils/appError";
+import authRouter from "./route/auth.route";
+import userRouter from "./route/user.route";
+import transactionRouter from "./route/transaction.route";
+import summaryRouter from "./route/summary.route";
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 
+app.use(helmet());
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
+app.use("/auth", authRouter);
+app.use("/user", userRouter);
+app.use("/transaction", transactionRouter);
+app.use("/summary", summaryRouter);
 
-app.use((req, res) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({ error: "Not found" });
 });
 
