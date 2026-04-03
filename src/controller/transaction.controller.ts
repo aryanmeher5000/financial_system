@@ -26,12 +26,12 @@ export async function getTransactionsByCriteriaController(req: Request, res: Res
     data.page,
   );
 
-  res.status(200).json({ success: true, message: "Transactions fetched successfully", ...result });
+  res.status(200).json({ ...result });
 }
 
 export async function getTransactionByIdContoller(req: Request, res: Response) {
   const transactionId = extractId("transaction", req.params.id);
-  const transaction = getTransactionById(transactionId);
+  const transaction = await getTransactionById(transactionId);
   res.status(200).json({ transaction });
 }
 

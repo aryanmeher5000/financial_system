@@ -19,26 +19,68 @@ export const updateTransactionSchema = createTransactionSchema.partial().strict(
 export type UpdateTransactionSchema = z.infer<typeof updateTransactionSchema>;
 
 export const getTransactionsCriteriaSchema = z.object({
-  category: z.string().min(1, { message: "Category must be at least 1 character long" }).optional(),
-  type: z.enum(["INCOME", "EXPENSE"], { message: "Type must be either INCOME or EXPENSE" }).optional(),
-  dateFrom: z.coerce.date({ message: "Invalid dateFrom" }).optional(),
-  dateTo: z.coerce.date({ message: "Invalid dateTo" }).optional(),
-  amountMin: z.coerce
-    .number({ message: "amountMin must be a number" })
-    .positive({ message: "amountMin must be a positive number" })
+  category: z.string().min(1).optional(),
+
+  type: z
+    .string()
+    .transform((val) => {
+      if (!val) return undefined;
+      const v = val.toUpperCase();
+      return v === "INCOME" || v === "EXPENSE" ? v : undefined;
+    })
     .optional(),
-  amountMax: z.coerce
-    .number({ message: "amountMax must be a number" })
-    .positive({ message: "amountMax must be a positive number" })
+
+  dateFrom: z
+    .any()
+    .transform((val) => {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? undefined : d;
+    })
     .optional(),
+
+  dateTo: z
+    .any()
+    .transform((val) => {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? undefined : d;
+    })
+    .optional(),
+
+  amountMin: z
+    .any()
+    .transform((val) => {
+      const num = Number(val);
+      return num > 0 ? num : undefined;
+    })
+    .optional(),
+
+  amountMax: z
+    .any()
+    .transform((val) => {
+      const num = Number(val);
+      return num > 0 ? num : undefined;
+    })
+    .optional(),
+
   sortBy: z
-    .enum(["date", "amount", "createdAt"], { message: "sortBy must be one of: date, amount, createdAt" })
+    .string()
+    .transform((val) => {
+      const allowed = ["date", "amount", "createdAt"];
+      return allowed.includes(val) ? val : "createdAt";
+    })
     .default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"], { message: "sortOrder must be either asc or desc" }).default("desc"),
-  page: z.coerce
-    .number({ message: "Page must be a number" })
-    .int({ message: "Page must be an integer" })
-    .positive({ message: "Page must be a positive number" })
+
+  sortOrder: z
+    .string()
+    .transform((val) => (val?.toLowerCase() === "desc" ? "desc" : "asc"))
+    .default("asc"),
+
+  page: z
+    .any()
+    .transform((val) => {
+      const num = Number(val);
+      return Number.isInteger(num) && num > 0 ? num : 1;
+    })
     .default(1),
 });
 

@@ -20,9 +20,9 @@ export async function getTransactionsByCriteria(
   dateTo: Date | undefined = undefined,
   amountMin: number | undefined = undefined,
   amountMax: number | undefined = undefined,
-  sortBy: "date" | "amount" | "createdAt" = "createdAt",
-  sortOrder: "asc" | "desc" = "desc",
-  page: number = 1,
+  sortBy: string | undefined = "createdAt",
+  sortOrder: "asc" | "desc" | undefined = "desc",
+  page: number | undefined = 1,
 ) {
   const where: Prisma.TransactionWhereInput = {
     isDeleted: false,
@@ -77,12 +77,10 @@ export async function getTransactionById(transactionId: number) {
       createdAt: true,
     },
   });
-  if (transaction) throw new AppError("Transaction not found", 404);
+  if (!transaction) throw new AppError("Transaction not found", 404);
 
   return transaction;
 }
-
-export async function getCategories() {}
 
 export async function createTransaction(
   amount: number,
